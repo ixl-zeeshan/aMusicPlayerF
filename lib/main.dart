@@ -2,7 +2,9 @@ import 'package:a_music_player_flutter/models/nav_item.dart';
 import 'package:a_music_player_flutter/ui/album/album_screen.dart';
 import 'package:a_music_player_flutter/ui/artist/artist_screen.dart';
 import 'package:a_music_player_flutter/ui/home/home_screen.dart';
+import 'package:a_music_player_flutter/ui/player/player_screen.dart';
 import 'package:a_music_player_flutter/ui/playlist/playlist_screen.dart';
+import 'package:a_music_player_flutter/utils/constants.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -34,13 +36,13 @@ class MyApp extends StatelessWidget {
           titleLarge: TextStyle(fontSize: 36.0, fontStyle: FontStyle.italic),
           bodyMedium: TextStyle(fontSize: 14.0, fontFamily: 'Hind'),
         ),
-        bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        bottomNavigationBarTheme: const BottomNavigationBarThemeData(
           showSelectedLabels: true,
           showUnselectedLabels: true,
           type: BottomNavigationBarType.fixed,
         ),
       ),
-      home: MainScreen(),
+      home: const MainScreen(),
     );
   }
 }
@@ -82,6 +84,7 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       bottomNavigationBar: NavigationBar(
+        height: Constants.bottomNavHeight,
         selectedIndex: selectedIndex,
         destinations: MainScreen._navItems
             .map(
@@ -93,27 +96,31 @@ class _MainScreenState extends State<MainScreen> with TickerProviderStateMixin {
             .toList(),
         onDestinationSelected: (index) => setState(() {
           selectedIndex = index;
-        }),
+            }),
       ),
       body: Stack(
         alignment: Alignment.bottomCenter,
         children: [
           MainScreen._navItems.map((e) => e.screen).elementAt(selectedIndex),
-          BottomSheet(
-            animationController: BottomSheet.createAnimationController(this),
-            onClosing: () {},
-            builder: (context) => ListView(
-              children: List.generate(
-                15,
-                (index) => Container(
-                  color: Colors.red,
-                  height: 50,
-                  width: MediaQuery.of(context).size.width,
-                  child: Text("Text  $index"),
-                ),
-              ),
-            ),
-          ),
+          Builder(builder: (context) {
+            var maxHeight = MediaQuery.of(context).size.height;
+            var initialFractionVisible = Constants.playerBarHeight / maxHeight;
+            return DraggableScrollableSheet(
+              initialChildSize: initialFractionVisible,
+              minChildSize: initialFractionVisible,
+              snap: true,
+              builder:
+                  (BuildContext context, ScrollController scrollController) {
+                return SingleChildScrollView(
+                  controller: scrollController,
+                  child: SizedBox(
+                    height: maxHeight - Constants.bottomNavHeight,
+                    child: const PlayerScreen(),
+                  ),
+                );
+              },
+            );
+          }),
         ],
       ),
     );
